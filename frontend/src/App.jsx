@@ -1,8 +1,11 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
 import Auth from "./pages/Auth";
 import ChooseRole from "./pages/ChooseRole";
+import EmployeeDash from './pages/employee/EmployeeDash'
+import RecruiterDash from './pages/recruiter/RecruiterDash'
+
+import { Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+
 
 const App = () => {
   return (
@@ -11,6 +14,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<ChooseRole />} />
         <Route path="/login" element={<Auth />} />
+        <Route path="/employee/dashboard" element={<EmployeeDash />} />
+        <Route path="/recruiter/dashboard" element={<RecruiterDash />} />
       </Routes>
     </div>
   );

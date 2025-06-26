@@ -6,6 +6,8 @@ import cors from "cors";
 
 import { connectDB } from "./config/database.js";
 import { recruiterRouter } from "./routes/recruiter/recruiterRoutes.js";
+import { employeeRouter } from "./routes/employee/employeeRoutes.js";
+import { errorHandler, notFound } from "./middlewares/errorMiddlware.js";
 
 dotenv.config();
 connectDB();
@@ -29,6 +31,10 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/recruiter", recruiterRouter);
+app.use("/api/employee", employeeRouter);
+
+app.use(notFound)
+app.use(errorHandler)
 
 app.listen(port, () => {
   console.log(`Server running at port ${port}`);

@@ -3,6 +3,9 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { useAuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import axios from "axios";
 import {
   signUpValidationSchema,
   loginValidationSchema,
@@ -14,9 +17,11 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
-  const { role } = useAuthContext(); // ✅ Use context role only
+  const navigate = useNavigate();
+  const { role } = useAuthContext();
 
   const formik = useFormik({
+     enableReinitialize: true,
     initialValues: {
       firstName: "",
       lastName: "",
@@ -33,9 +38,87 @@ const Auth = () => {
         : isLogin
         ? loginValidationSchema
         : signUpValidationSchema,
-    onSubmit: (values) => {
-      console.log(isLogin ? "Logging in..." : "Registering...", values, role);
+
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      console.log("✅ FORM SUBMITTED");
+      console.log("role:", role);
+      console.log("isLogin:", isLogin);
+      console.log("values:", values);
+
+      const schemaName =
+        role === "recruiter"
+          ? isLogin
+            ? "recruiterLoginSchema"
+            : "recruiterSignUpSchema"
+          : isLogin
+          ? "loginValidationSchema"
+          : "signUpValidationSchema";
+      console.log("Using schema:", schemaName);
+
+      try {
+        const baseURL = import.meta.env.VITE_BACKEND_URL;
+
+
+        const endpoint =
+          role === "recruiter"
+            ? isLogin
+              ? `${baseURL}/api/recruiter/login`
+              : `${baseURL}/api/recruiter/register`
+            : isLogin
+            ? `${baseURL}/api/employee/login`
+            : `${baseURL}/api/employee/register`;
+
+        const payload = {
+          email: values.email,
+          password: values.password,
+        };
+
+        if (!isLogin) {
+          if (role === "recruiter") {
+            payload.companyName = values.companyName;
+          } else {
+            payload.firstName = values.firstName;
+            payload.lastName = values.lastName;
+          }
+        }
+
+        console.log("📦 Payload being sent:", payload);
+        console.log("🌐 Endpoint:", endpoint);
+
+        const { data } = await axios.post(endpoint, payload);
+
+        // Clear other role's data
+        localStorage.removeItem(role === "recruiter" ? "employee" : "recruiter");
+
+        // Store new user data
+        localStorage.setItem(role, JSON.stringify(data));
+
+        toast.success(
+          role === "recruiter"
+            ? isLogin
+              ? "Recruiter login successful"
+              : "Recruiter registration completed"
+            : isLogin
+            ? "Employee login successful"
+            : "Employee registration completed"
+        );
+
+        setTimeout(() => {
+          navigate(
+            role === "recruiter"
+              ? "/recruiter/dashboard"
+              : "/employee/dashboard"
+          );
+        }, 1500);
+      } catch (err) {
+        console.error("❌ Auth error:", err);
+        toast.error(err?.response?.data?.message || "Something went wrong");
+      } finally {
+        setSubmitting(false);
+        resetForm();
+      }
     },
+
     validateOnBlur: true,
     validateOnChange: true,
   });
@@ -49,8 +132,20 @@ const Auth = () => {
             : `CareerCraft ${role === "recruiter" ? "Recruiter" : "Job Seeker"} Sign Up`}
         </h2>
 
-        <form className="space-y-4" onSubmit={formik.handleSubmit}>
-          {/* Employee Sign Up - First & Last Name */}
+        <form
+          className="space-y-4"
+          onSubmit={(e) => {
+            console.log("📝 FORM SUBMIT EVENT");
+            formik.handleSubmit(e);
+          }}
+        >
+          {/* Debug Info */}
+          <p className="text-sm text-gray-600 bg-gray-100 rounded px-2 py-1">
+            <strong>Debug:</strong> Role: <code>{role}</code>, Mode:{" "}
+            <code>{isLogin ? "Login" : "Register"}</code>
+          </p>
+
+          {/* Employee Signup */}
           {!isLogin && role === "employee" && (
             <div className="flex gap-4">
               <div className="flex-1">
@@ -64,7 +159,7 @@ const Auth = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.firstName}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-400"
                 />
                 {formik.touched.firstName && formik.errors.firstName && (
                   <p className="text-sm text-red-600 mt-1">
@@ -72,7 +167,6 @@ const Auth = () => {
                   </p>
                 )}
               </div>
-
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Last Name
@@ -84,7 +178,7 @@ const Auth = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.lastName}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-400"
                 />
                 {formik.touched.lastName && formik.errors.lastName && (
                   <p className="text-sm text-red-600 mt-1">
@@ -95,7 +189,7 @@ const Auth = () => {
             </div>
           )}
 
-          {/* Recruiter Sign Up - Company Name Only */}
+          {/* Recruiter Signup */}
           {!isLogin && role === "recruiter" && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -108,7 +202,7 @@ const Auth = () => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.companyName}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-400"
               />
               {formik.touched.companyName && formik.errors.companyName && (
                 <p className="text-sm text-red-600 mt-1">
@@ -118,7 +212,7 @@ const Auth = () => {
             </div>
           )}
 
-          {/* Common: Email */}
+          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Email
@@ -130,7 +224,7 @@ const Auth = () => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.email}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-400"
             />
             {formik.touched.email && formik.errors.email && (
               <p className="text-sm text-red-600 mt-1">
@@ -139,7 +233,7 @@ const Auth = () => {
             )}
           </div>
 
-          {/* Common: Password */}
+          {/* Password */}
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -151,7 +245,7 @@ const Auth = () => {
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               value={formik.values.password}
-              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-blue-400"
             />
             <div
               className="absolute top-9 right-3 text-gray-500 cursor-pointer"
@@ -166,7 +260,7 @@ const Auth = () => {
             )}
           </div>
 
-          {/* Confirm Password only for signup */}
+          {/* Confirm Password */}
           {!isLogin && (
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,13 +273,11 @@ const Auth = () => {
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.confirmPassword}
-                className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-blue-400"
               />
               <div
                 className="absolute top-9 right-3 text-gray-500 cursor-pointer"
-                onClick={() =>
-                  setShowConfirmPassword(!showConfirmPassword)
-                }
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
               </div>
@@ -206,7 +298,7 @@ const Auth = () => {
             {isLogin ? "Login" : "Create Account"}
           </button>
 
-          {/* Google Login only for employee */}
+          {/* Google Login */}
           {isLogin && role === "employee" && (
             <button
               type="button"
@@ -220,7 +312,12 @@ const Auth = () => {
           )}
         </form>
 
-        {/* Switch Login/Register */}
+        {/* Form Values Debug Display */}
+        <pre className="text-xs text-gray-500 mt-4 bg-gray-50 p-2 rounded">
+          {JSON.stringify(formik.values, null, 2)}
+        </pre>
+
+        {/* Toggle */}
         <p className="text-center text-sm text-gray-600 mt-6">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <span

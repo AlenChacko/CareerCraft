@@ -8,7 +8,7 @@ const ChooseRole = () => {
   const { setRole } = useAuthContext();
 
   const handleSelect = (role) => {
-    setRole(role); // Set in context
+    setRole(role); 
     navigate("/login");
   };
 
