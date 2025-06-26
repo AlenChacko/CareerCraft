@@ -3,10 +3,11 @@ import dotenv from 'dotenv'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import cors from 'cors'
-import handler from 'express-async-handler'
 
+import { connectDB } from './config/database.js'
 
 dotenv.config()
+connectDB()
 
 const port = process.env.PORT || 5000
 const app = express()
