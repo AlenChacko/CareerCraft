@@ -1,13 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import axios from "axios";
 
 const EmployeeContext = createContext();
 
 export const EmployeeProvider = ({ children }) => {
-  const [employee, setEmployee] = useState(null);
-  const [token, setToken] = useState(
-    localStorage.getItem("employeeToken") || ""
-  );
+  const [employeeInfo, setEmployeeInfo] = useState(() => {
+    const stored = localStorage.getItem("employeeInfo");
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const registerEmployee = async (formData) => {
     try {
@@ -15,14 +15,15 @@ export const EmployeeProvider = ({ children }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/register`,
         formData
       );
-      localStorage.setItem("employeeToken", data.token);
-      setToken(data.token);
-      setEmployee({
+      const info = {
         _id: data._id,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-      });
+        token: data.token,
+      };
+      localStorage.setItem("employeeInfo", JSON.stringify(info));
+      setEmployeeInfo(info);
       return data;
     } catch (err) {
       throw err;
@@ -35,28 +36,33 @@ export const EmployeeProvider = ({ children }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/employee/login`,
         formData
       );
-      localStorage.setItem("employeeToken", data.token);
-      setToken(data.token);
-      setEmployee({
+      const info = {
         _id: data._id,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-      });
+        token: data.token,
+      };
+      localStorage.setItem("employeeInfo", JSON.stringify(info));
+      setEmployeeInfo(info);
       return data;
     } catch (err) {
       throw err;
     }
   };
 
+  const logoutEmployee = () => {
+    localStorage.removeItem("employeeInfo");
+    setEmployeeInfo(null);
+  };
+
   return (
     <EmployeeContext.Provider
-      value={{ registerEmployee, loginEmployee, employee, token }}
+      value={{ registerEmployee, loginEmployee, employeeInfo, logoutEmployee }}
     >
       {children}
     </EmployeeContext.Provider>
   );
 };
 
-
-export const useEmployeeContext = () => useContext(EmployeeContext)
+export const useEmployeeContext = () => useContext(EmployeeContext);

@@ -40,7 +40,7 @@ const RecruiterAuth = () => {
         }
 
         resetForm();
-        navigate(`/recruiter/dashboard/${data._id}`);
+        navigate(`/recruiter/dashboard/${data._id}`,{replace:true});
       } catch (err) {
         const message =
           err?.response?.data?.message ||

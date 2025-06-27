@@ -1,8 +1,22 @@
 import { FaUserTie, FaUserGraduate } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useEmployeeContext } from "../context/EmployeeContext";
+import { useRecruiterContext } from "../context/RecruiterContext";
 
 const ChooseRole = () => {
+  const { employeeInfo } = useEmployeeContext();
+  const { recruiterInfo } = useRecruiterContext();
+
+  // 🔐 Redirect if already logged in
+  if (employeeInfo?.token) {
+    return <Navigate to={`/employee/dashboard/${employeeInfo._id}`} replace />;
+  }
+
+  if (recruiterInfo?.token) {
+    return <Navigate to={`/recruiter/dashboard/${recruiterInfo._id}`} replace />;
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-200 px-4">
       <div className="max-w-md w-full text-center">
@@ -19,7 +33,9 @@ const ChooseRole = () => {
           </span>
         </motion.h1>
 
-        <p className="text-sm text-gray-600 mb-8">Empowering careers, one match at a time.</p>
+        <p className="text-sm text-gray-600 mb-8">
+          Empowering careers, one match at a time.
+        </p>
 
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Choose Your Role</h2>
 

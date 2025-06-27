@@ -4,10 +4,11 @@ import axios from "axios";
 const RecruiterContext = createContext();
 
 export const RecruiterProvider = ({ children }) => {
-  const [recruiter, setRecruiter] = useState(null);
-  const [token, setToken] = useState(
-    localStorage.getItem("recruiterToken") || ""
-  );
+  // Combine token and user info into one object
+  const [recruiterInfo, setRecruiterInfo] = useState(() => {
+    const stored = localStorage.getItem("recruiterInfo");
+    return stored ? JSON.parse(stored) : null;
+  });
 
   const registerRecruiter = async (formData) => {
     try {
@@ -15,16 +16,17 @@ export const RecruiterProvider = ({ children }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/recruiter/register`,
         formData
       );
-      localStorage.setItem("recruiterToken", data.token);
-      setToken(data.token);
-      setRecruiter({
+      const info = {
         _id: data._id,
         email: data.email,
         companyName: data.companyName,
-      });
+        token: data.token,
+      };
+      localStorage.setItem("recruiterInfo", JSON.stringify(info));
+      setRecruiterInfo(info);
       return data;
     } catch (err) {
-      throw err; // still throw so the form page can handle loading/UI
+      throw err;
     }
   };
 
@@ -34,22 +36,28 @@ export const RecruiterProvider = ({ children }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/recruiter/login`,
         formData
       );
-      localStorage.setItem("recruiterToken", data.token);
-      setToken(data.token);
-      setRecruiter({
+      const info = {
         _id: data._id,
         email: data.email,
         companyName: data.companyName,
-      });
+        token: data.token,
+      };
+      localStorage.setItem("recruiterInfo", JSON.stringify(info));
+      setRecruiterInfo(info);
       return data;
     } catch (err) {
       throw err;
     }
   };
 
+  const logoutRecruiter = () => {
+    localStorage.removeItem("recruiterInfo");
+    setRecruiterInfo(null);
+  };
+
   return (
     <RecruiterContext.Provider
-      value={{ registerRecruiter, recruiter, token, loginRecruiter }}
+      value={{ registerRecruiter, loginRecruiter, recruiterInfo, logoutRecruiter }}
     >
       {children}
     </RecruiterContext.Provider>

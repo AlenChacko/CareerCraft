@@ -41,7 +41,8 @@ const EmployeeAuth = () => {
           toast.success("Login successful!");
         }
         resetForm();
-        navigate(`/employee/dashboard/${data._id}`);
+       navigate(`/employee/dashboard/${data._id}`, { replace: true });
+
       } catch (err) {
         toast.error(
           err?.response?.data?.message || err.message || "Something went wrong"
