@@ -1,5 +1,10 @@
-// src/pages/recruiter/RecruiterDashboard.jsx
-import { FaBriefcase, FaPlus, FaUserCircle, FaEnvelope, FaEye } from "react-icons/fa";
+import {
+  FaBriefcase,
+  FaPlus,
+  FaUserCircle,
+  FaEnvelope,
+  FaEye,
+} from "react-icons/fa";
 import { useParams } from "react-router-dom";
 import RecruiterNavbar from "../../components/recruiter/RecruiterNavbar";
 
@@ -57,8 +62,6 @@ const RecruiterDashboard = () => {
             </div>
           ))}
         </div>
-
-        
       </div>
     </div>
   );
